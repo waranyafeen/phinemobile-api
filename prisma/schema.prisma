@@ -21,3 +21,25 @@ model User {
   status    String @default("active")
   level     String @default("user")
 }
+
+model Company {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  name    String
+  address String
+  phone   String
+  email   String?
+  taxCode String
+}
+
+model Product {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  release         String
+  name            String
+  color           String
+  price           Int
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  remark          String
+  status          String @default("in stock")
+}
