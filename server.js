@@ -35,7 +35,9 @@ app.get("/api/company/list", CompanyController.list);
 //buy
 //
 app.post("/api/buy/create", ProductController.create);
-
+app.get("/api/buy/list", ProductController.list); //กรณีเป็นสินค้ามือสอง
+app.put("/api/buy/update/:id", ProductController.update);
+app.delete("/api/buy/remove/:id", ProductController.remove); //ลบแบบ soft delete
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
