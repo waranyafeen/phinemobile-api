@@ -2,6 +2,8 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const { info } = require("console");
+const { decode } = require("punycode");
 dotenv.config();
 
 module.exports = {
@@ -29,6 +31,48 @@ module.exports = {
             }catch(error) {
                 console.error("Error in signIn:", error);
                 res.status(500).json({message: error.message});
+            }
+        },
+        info: async (req, res) => {
+            try {
+                const hesder = req.headers.authorization;
+                const token = hesder.split(" ")[1];
+                const decoded = jwt.verify(token, process.env.SECRET_KEY);
+                const user = await prisma.user.findFirst({
+                    where: { id: decoded.id },
+                    select: {
+                        name: true,
+                        level: true,
+                        username: true
+                    }
+                });
+                res.json(user); 
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+            
+        },
+        update: async (req, res) => {
+            try {
+                const headers = req.headers.authorization; //รับ headers เข้ามา
+                const token = headers.split(" ")[1]; //split header เอา token
+                const decoded = jwt.verify(token, process.env.SECRET_KEY); //ถอดรหัสเอาไอดี
+                const oldUser = await prisma.user.findFirst({
+                    where: { id: decoded.id }
+                });
+                //ถ้ามีค่าใหม่ ? ก็เอาตามที่กรอก : ถ้าไม่ก็ค่าเดิม
+                const newPassword = req.body.password !== "" ? req.body.password : oldUser.password;
+                await prisma.user.update({ //ค้น user ออกมา
+                    where: { id: decoded.id }, //ตาม id ที่พบ
+                    data: { //เปลี่ยนข้อมูล 
+                        name: req.body.name,
+                        username: req.body.username,
+                        password: newPassword,
+                    }
+                });
+                res.json({ message: "success"});
+            } catch (error) {
+                res.status(500).json({ message: error.message });
             }
         }
     }
