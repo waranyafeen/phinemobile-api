@@ -105,6 +105,38 @@ module.exports = {
             } catch (error) {
                 res.status(500).json({ message: error.message });
             }
+        },
+        dashboard: async (req, res) => {
+            try {
+                //total income
+                const income = await prisma.sell.aggregate({
+                    _sum: { //หาผลรวม รายได้ทั้งหมด
+                        price: true
+                    },
+                    where: { //จากสถานะการจ่ายเงิน
+                        status: 'paid'
+                    }
+                });
+
+                //total repair
+                const countRepair = await prisma.service.count(); 
+
+                //total sell
+                const countSell = await prisma.sell.count({ //นับจากที่จ่ายตัง
+                    where: {
+                        status: 'paid'
+                    }
+                });
+
+                return res.json({
+                    totalIncome: income._sum.price,
+                    totalRepair: countRepair,
+                    totalSale: countSell
+                });
+
+            } catch (error) {
+                res.status(500).json({ message: error.message });
+            }
         }
     }
 }
