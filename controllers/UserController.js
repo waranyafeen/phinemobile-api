@@ -26,7 +26,7 @@ module.exports = {
             const token = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: "30d"});  
             
             //ส่ง token กลับไป
-            res.status(200).json({ token: token });
+            res.status(200).json({ token: token, level: user.level });
             
             }catch(error) {
                 console.error("Error in signIn:", error);
