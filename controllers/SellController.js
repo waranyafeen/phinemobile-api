@@ -108,13 +108,21 @@ module.exports = {
         },
         dashboard: async (req, res) => {
             try {
+                const year = Number(req.params.year) ?? new Date().getFullYear();
+                const startDate = new Date(`${year}-01-01`);
+                const endtDate = new Date(`${year + 1}-01-01`);
+
                 //total income
                 const income = await prisma.sell.aggregate({
                     _sum: { //หาผลรวม รายได้ทั้งหมด
                         price: true
                     },
                     where: { //จากสถานะการจ่ายเงิน
-                        status: 'paid'
+                        status: 'paid',
+                        payDate: {
+                            gte: startDate,
+                            lt: endtDate
+                        }
                     }
                 });
 
@@ -124,7 +132,11 @@ module.exports = {
                 //total sell
                 const countSell = await prisma.sell.count({ //นับจากที่จ่ายตัง
                     where: {
-                        status: 'paid'
+                        status: 'paid',
+                        payDate: {
+                            gte: startDate,
+                            lt: endtDate
+                        }
                     }
                 });
 
@@ -135,6 +147,45 @@ module.exports = {
                 });
 
             } catch (error) {
+                res.status(500).json({ message: error.message });
+            }
+        },
+        history: async (req, res) => {
+            try {
+                const sells = await prisma.sell.findMany({
+                    where: {
+                        status: 'paid'
+                    },
+                    orderBy: {
+                        id: 'desc'
+                    },
+                    include: {
+                        product: {
+                            select: {
+                                serial: true,
+                                name: true
+                            }
+                        }
+                    }
+                });
+                res.json(sells);
+            } catch (error) {
+                res.status(500).json({ message: error.message });
+            }
+        },
+        info: async (req, res) => {
+            try {
+                const sell = await prisma.sell.findUnique({
+                    where: {
+                        id: req.params.id,
+                        status: 'paid'
+                    },
+                    include: {
+                        product: true
+                    }
+                });
+                res.json(sell);
+            } catch(error) {
                 res.status(500).json({ message: error.message });
             }
         }
