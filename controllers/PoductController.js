@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const XLSX = require('xlsx');
 
 module.exports = {
     ProductController: {
@@ -35,6 +36,18 @@ module.exports = {
         },
         list: async (req, res) => {
             try {
+                const page = req.params.page ?? 1;
+                const limit = 5;
+                const skip = (page -1) * limit;
+                const totalRows = await prisma.product.count({
+                    where: {
+                        status: {
+                            not: 'delete'
+                        }
+                    }
+                });
+                const totalPages = Math.ceil(totalRows / limit);
+
                 const products = await prisma.product.findMany({
                     orderBy: {
                         id: "desc"
@@ -43,9 +56,11 @@ module.exports = {
                         status: {
                             not: "Delete"
                         }
-                    }
+                    },
+                    skip: skip,
+                    take: limit
                 });
-                res.json(products);
+                res.json({ products, totalPages, page, totalRows});
             } catch (err) {
                 res.status(500).json({ error: err.message });
             }
@@ -80,6 +95,22 @@ module.exports = {
                 res.json({ message: "success" });
             } catch (err) {
                 res.status(500).json({ error: err.message });
+            }
+        },
+        exportToExcel: async (req, res) => {
+            try {
+                const data = req.body.products;
+                const fileName = 'products.xlsx';
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+                //write to file
+                XLSX.writeFile(workbook, './uploads/' + fileName);
+                res.json({ fileName: fileName });
+            } catch(err) {
+                res.status(500).json({ message: err.message });
             }
         }
     }
