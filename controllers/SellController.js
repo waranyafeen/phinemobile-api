@@ -1,9 +1,9 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 const jwt = require("jsonwebtoken");
-const dotenv = require("dotenv");
 const { error } = require("console");
-dotenv.config();
 
 module.exports = {
     SellController: {
